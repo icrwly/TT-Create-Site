@@ -1,4 +1,3 @@
-<!-- resources/views/create-site.blade.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,9 +7,11 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-200 min-h-screen flex items-center justify-center">
+    @vite(['resources/js/app.js'])
+
     <div class="bg-white p-8 rounded shadow-md w-full sm:w-96">
         <h2 class="text-2xl font-bold mb-4">Create Pantheon Site</h2>
-        <form id="createSiteForm" method="post" action="{{ route('site.create') }}" onsubmit="return validateForm()">
+        <form id="createSiteForm" method="post" action="{{ route('site.create') }}">
             @csrf
             <label for="site_label" class="block mb-2">Site Label:</label>
             <input type="text" id="site_label" name="site_label" required
@@ -59,6 +60,9 @@
                 <option value="Louisiana">Louisiana</option>
             </select>
 
+            <!-- Hidden upstream_id field -->
+            <input type="hidden" id="upstream_id" name="upstream_id">
+
             <input type="submit" value="Create Site" class="mt-6 px-4 py-2 bg-blue-500 text-white rounded-md cursor-pointer">
         </form>
 
@@ -73,25 +77,77 @@
 
     <script>
         function updateUpstreamId(cms) {
-            var upstreamIdField = document.getElementById('upstream_id');
+            const upstreamIdField = document.getElementById('upstream_id');
+
             switch (cms) {
                 case 'drupal7':
-                    upstreamIdField.value = '21e1fada-199c-492b-97bd-0b36b53a9da0'; // Drupal 7 upstream ID
+                    upstreamIdField.value = '21e1fada-199c-492b-97bd-0b36b53a9da0';
                     break;
                 case 'drupal9':
-                    upstreamIdField.value = '8a129104-9d37-4082-aaf8-e6f31154644e'; // Drupal 9 upstream ID
+                    upstreamIdField.value = '8a129104-9d37-4082-aaf8-e6f31154644e';
                     break;
                 case 'drupal10':
-                    upstreamIdField.value = 'bde48795-b16d-443f-af01-8b1790caa1af'; // Drupal 10 upstream ID
+                    upstreamIdField.value = 'bde48795-b16d-443f-af01-8b1790caa1af';
                     break;
                 case 'wordpress':
-                    upstreamIdField.value = 'e8fe8550-1ab9-4964-8838-2b9abdccf4bf'; // WordPress upstream ID
+                    upstreamIdField.value = 'e8fe8550-1ab9-4964-8838-2b9abdccf4bf';
                     break;
                 default:
                     upstreamIdField.value = '';
                     break;
             }
         }
+
+        document.getElementById('createSiteForm').addEventListener('submit', (event) => {
+            event.preventDefault(); // Prevent the default form submission
+
+            const formData = new FormData(event.target); // Create a FormData object
+
+            // Show the status area
+            document.getElementById('statusArea').classList.remove('hidden');
+
+            // Send the form data using fetch
+            fetch(event.target.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value // Include CSRF token
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle success or error messages
+                const statusList = document.getElementById('statusList');
+                const listItem = document.createElement('li');
+                listItem.textContent = data.message; // Assuming your server returns a message
+                statusList.appendChild(listItem);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const statusList = document.getElementById('statusList');
+                const listItem = document.createElement('li');
+                listItem.textContent = 'An error occurred. Please try again.';
+                statusList.appendChild(listItem);
+            });
+        });
+        //document.getElementById('createSiteForm').addEventListener('submit', (event) => {
+          //  document.getElementById('statusArea').classList.remove('hidden'); // Show the status area
+        //});
+
+        setTimeout(() => {
+            if (window.Echo) {
+                window.Echo.channel('pantheon-status')
+                    .listen('TerminusCommandExecuted', (event) => {
+                        console.log(event.message); // Log to console for debugging
+
+                        // Display status message
+                        const statusList = document.getElementById('statusList');
+                        const listItem = document.createElement('li');
+                        listItem.textContent = event.message;
+                        statusList.appendChild(listItem);
+                    });
+            }
+        }, 200);
     </script>
 </body>
 </html>

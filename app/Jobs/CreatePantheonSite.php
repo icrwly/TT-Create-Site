@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
+use App\Events\TerminusCommandExecuted;
 
 class CreatePantheonSite implements ShouldQueue
 {
@@ -31,14 +32,22 @@ class CreatePantheonSite implements ShouldQueue
         $sitePlan = $this->requestData['site_plan'];
         $tag = $this->requestData['tag'];
 
-        $machineToken = env('PANTHEON_MACHINE_TOKEN');
-        $organization = env('PANTHEON_ORGANIZATION');
+       //$machineToken = env('PANTHEON_MACHINE_TOKEN');
+       //$organization = env('PANTHEON_ORGANIZATION');
+
+       $machineToken = "8vnHInADKi6Tj0PbAUjeiqGDt8dhomi29Zwbj02oUGpxh";
+       $organization = "tyler-technologies";
 
         $upstreamId = $this->getUpstreamId($cms);
 
         try {
-            $this->executeCommand("terminus auth:login --machine-token=$machineToken");
+            // Prepare a message to broadcast
+            $message = "Commands executed successfully for site: $machineName with label: $label.";
+            // Broadcast the event with the message
+            broadcast(new TerminusCommandExecuted($message));
+            //event(new TerminusCommandExecuted($message));
 
+            $this->executeCommand("terminus auth:login --machine-token=$machineToken");
             $this->executeCommand("terminus site:create --org=$organization \"$machineName\" \"$label\" $upstreamId");
             $this->executeCommand("terminus site:org:add $machineName $supportingOrg");
             $this->executeCommand("terminus tag:add $machineName $organization $tag");
