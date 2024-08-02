@@ -41,15 +41,15 @@ class CreatePantheonSite implements ShouldQueue
         $upstreamId = $this->getUpstreamId($cms);
 
         try {
-            // Prepare a message to broadcast
-            $message = "Commands executed successfully for site: $machineName with label: $label.";
-            // Broadcast the event with the message
-            broadcast(new TerminusCommandExecuted($message));
-            //event(new TerminusCommandExecuted($message));
 
+            // Broadcast the event with the message
+            broadcast(new TerminusCommandExecuted("Logging into Terminus"));
             $this->executeCommand("terminus auth:login --machine-token=$machineToken");
+            broadcast(new TerminusCommandExecuted("Creating site"));
             $this->executeCommand("terminus site:create --org=$organization \"$machineName\" \"$label\" $upstreamId");
+            broadcast(new TerminusCommandExecuted("Assigning Supporting Org"));
             $this->executeCommand("terminus site:org:add $machineName $supportingOrg");
+            broadcast(new TerminusCommandExecuted("Adding Tag"));
             $this->executeCommand("terminus tag:add $machineName $organization $tag");
 
             // Retrieve site ID from the site info
@@ -57,11 +57,14 @@ class CreatePantheonSite implements ShouldQueue
             $siteId = $this->extractSiteIdFromJson($siteInfoJson);
 
             // Set the site plan
+            broadcast(new TerminusCommandExecuted("Adding Site Plan"));
             $this->executeCommand("terminus plan:set $siteId $sitePlan");
 
             \Log::info("Site creation successful: $machineName");
+            broadcast(new TerminusCommandExecuted("Your site has been created"));
         } catch (\Exception $e) {
             \Log::error("Site creation failed for '$machineName': " . $e->getMessage());
+            broadcast(new TerminusCommandExecuted("Site Creation Failed"));
             throw $e;
         }
     }

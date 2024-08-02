@@ -16,7 +16,7 @@ Route::post('/create-site', [SiteController::class, 'create'])->name('site.creat
 //Route::get('/pantheon', [PantheonController::class, 'listSites']);
 
 
-Route::get('/broadcast', function () {
+//Route::get('/broadcast', function () {
   //  broadcast(new TerminusCommandExecuteded("ian crowley"));
-    broadcast(new TerminusCommandExecuted("ian crowley rocks!"));
-});
+  //  broadcast(new TerminusCommandExecuted("test message"));
+//});

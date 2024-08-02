@@ -130,16 +130,12 @@
                 statusList.appendChild(listItem);
             });
         });
-        //document.getElementById('createSiteForm').addEventListener('submit', (event) => {
-          //  document.getElementById('statusArea').classList.remove('hidden'); // Show the status area
-        //});
 
         setTimeout(() => {
             if (window.Echo) {
                 window.Echo.channel('pantheon-status')
                     .listen('TerminusCommandExecuted', (event) => {
-                        console.log(event.message); // Log to console for debugging
-
+                       // console.log(event.message); // Log to console for debugging
                         // Display status message
                         const statusList = document.getElementById('statusList');
                         const listItem = document.createElement('li');
